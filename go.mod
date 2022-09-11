@@ -3,6 +3,7 @@ module github.com/cod3rboy/yaps
 go 1.19
 
 require (
+	github.com/chai2010/webp v1.1.1
 	github.com/fogleman/gg v1.3.0
 	github.com/gofiber/fiber/v2 v2.37.0
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
@@ -12,7 +13,6 @@ require (
 
 require (
 	github.com/andybalholm/brotli v1.0.4 // indirect
-	github.com/chai2010/webp v1.1.1 // indirect
 	github.com/klauspost/compress v1.15.9 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.39.0 // indirect
