@@ -1,3 +1,4 @@
+// Package server provides http server setup and handler to serve image generation requests.
 package server
 
 import (
@@ -9,12 +10,15 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
+// SetupAndListen fires up a http server to handle incoming requests for image generation.
+//
+// For supported image formats, see [SupportedFormats].
 func SetupAndListen() {
 	router := fiber.New()
 	router.Use(cors.New(cors.Config{
-		AllowOrigins: config.GetAllowOrigins(),
-		AllowMethods: config.GetAllowMethods(),
+		AllowOrigins: config.AllowOrigins(),
+		AllowMethods: config.AllowMethods(),
 	}))
 	router.Get("/:format<regex("+strings.Join(SupportedFormats, "|")+")>", HandlerImage)
-	router.Listen(config.GetHost() + ":" + strconv.Itoa(config.GetPort()))
+	router.Listen(config.Host() + ":" + strconv.Itoa(config.Port()))
 }

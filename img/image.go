@@ -1,3 +1,4 @@
+// Package img provides constants, types and functions for automatic image generation.
 package img
 
 import (
@@ -16,14 +17,16 @@ import (
 	"golang.org/x/image/tiff"
 )
 
-// Image file extensions
-const IMAGE_JPG = "jpg"
-const IMAGE_JPEG = "jpeg"
-const IMAGE_PNG = "png"
-const IMAGE_TIFF = "tiff"
-const IMAGE_WEBP = "webp"
+// Constants for image file extensions
+const (
+	IMAGE_JPG  = "jpg"
+	IMAGE_JPEG = "jpeg"
+	IMAGE_PNG  = "png"
+	IMAGE_TIFF = "tiff"
+	IMAGE_WEBP = "webp"
+)
 
-// Mime types corresponding to above images
+// Mime types corresponding to the image extensions
 var mimeTypes = map[string]string{
 	IMAGE_JPG:  "image/" + IMAGE_JPG,
 	IMAGE_JPEG: "image/" + IMAGE_JPEG,
@@ -32,63 +35,81 @@ var mimeTypes = map[string]string{
 	IMAGE_WEBP: "image/" + IMAGE_WEBP,
 }
 
-// Encoding function type
+// ImageEncoderFunc represents encoding function for any image type.
+//
+// It should encode the [image.Image] and write the data to the [io.Writer].
+// If any error occurs during encoding process, it should return that error otherwise it should return nil.
 type ImageEncoderFunc func(image.Image, io.Writer) error
 
-// Format indexed map of encoding functions
+// Mapping of an image extension to its corresponding [ImageEncoderFunc] function.
 var encoders = map[string]ImageEncoderFunc{
-	IMAGE_JPG:  encodeJPEG,
-	IMAGE_JPEG: encodeJPEG,
-	IMAGE_PNG:  encodePNG,
-	IMAGE_TIFF: encodeTIFF,
-	IMAGE_WEBP: encodeWEBP,
+	IMAGE_JPG:  EncodeJPEG,
+	IMAGE_JPEG: EncodeJPEG,
+	IMAGE_PNG:  EncodePNG,
+	IMAGE_TIFF: EncodeTIFF,
+	IMAGE_WEBP: EncodeWEBP,
 }
 
 // Pixel to Point value scale factor (1px = 0.75pt)
 const PX_TO_PT = 0.75
 
+// A Size represents the dimensions of an image i.e. image width and image height.
 type Size struct {
 	Width  int
 	Height int
 }
 
+// A Color represents the pixel color of an image.
+// Each color component is stored as a separate uint8 value.
 type Color struct {
 	R uint8
 	G uint8
 	B uint8
 }
 
+// An ImageParams stores parameters for image generation.
 type ImageParams struct {
-	Format string
-	*Size
-	BackgroundColor *Color
-	TextColor       *Color
-	Scale           float64
-	Text            string
+	Format          string  // Image extension
+	*Size                   // Image Size
+	BackgroundColor *Color  // Color to use for background
+	TextColor       *Color  // Color to use for text
+	Scale           float64 // Value by which to scale Size
+	Text            string  // Text to write on the image
 }
 
+// An ImageResult stores data of generated image.
 type ImageResult struct {
-	Bytes    []byte
-	Length   int
-	MimeType string
+	Bytes    []byte // Encoded bytes of generated image
+	Length   int    // Length = len(Bytes)
+	MimeType string // Image mime-type in format "image/<extension>" e.g. image/png, for png image.
 }
 
+// Generate generates an image with given parameters.
+//
+// It returns [ImageResult], nil when image is generated successfully.
+// If error occurs while generating image, it returns nil, error.
+//
+// The actual dimensions of image is calculated by scaling width and height with scale factor in [ImageParams].
 func Generate(params *ImageParams) (*ImageResult, error) {
+	// Scale dimensions by scale factor
 	w := utils.ScaleDimension(params.Width, params.Scale)
 	h := utils.ScaleDimension(params.Height, params.Scale)
 
 	canvas := gg.NewContext(w, h)
 
-	drawBackground(canvas, params.BackgroundColor)
-	if err := drawText(canvas, params.Text, params.TextColor); err != nil {
+	// Background filling
+	FillBackground(canvas, params.BackgroundColor)
+	if err := DrawText(canvas, params.Text, params.TextColor); err != nil {
 		return nil, err
 	}
 
+	// Determine mime type
 	mimeType, exists := mimeTypes[params.Format]
 	if !exists {
 		return nil, fmt.Errorf("mime type not found for format %s", params.Format)
 	}
 
+	// Encode image
 	imgBytes, err := encode(canvas, params.Format)
 	if err != nil {
 		return nil, err
@@ -101,12 +122,19 @@ func Generate(params *ImageParams) (*ImageResult, error) {
 	}, nil
 }
 
-func drawBackground(canvas *gg.Context, color *Color) {
+// FillBackground fills the canvas with given color.
+func FillBackground(canvas *gg.Context, color *Color) {
 	canvas.SetRGBA255(int(color.R), int(color.G), int(color.B), 0xFF)
 	canvas.Clear()
 }
 
-func drawText(canvas *gg.Context, text string, color *Color) error {
+// DrawText draws the given text on the canvas with given color.
+//
+// Dynamic font size is used to draw text and is calcuated by canvas height * [PX_TO_PT] * 0.2.
+//
+// The text is anchored at the image centre.
+// It also wraps around when overflows the canvas width.
+func DrawText(canvas *gg.Context, text string, color *Color) error {
 	canvas.SetRGBA255(int(color.R), int(color.G), int(color.B), 0xFF)
 	font, err := truetype.Parse(goregular.TTF)
 	if err != nil {
@@ -118,6 +146,9 @@ func drawText(canvas *gg.Context, text string, color *Color) error {
 	return nil
 }
 
+// encode converts the canvas into bytes for given image format.
+//
+// If an error occurs while encoding, it returns nil, error.
 func encode(canvas *gg.Context, format string) ([]byte, error) {
 	imgBuffer := new(bytes.Buffer)
 
@@ -132,24 +163,46 @@ func encode(canvas *gg.Context, format string) ([]byte, error) {
 	return imgBuffer.Bytes(), nil
 }
 
-func encodePNG(img image.Image, writer io.Writer) error {
+// EncodePNG encodes the given [image.Image] into PNG format bytes and writes those bytes in [io.Writer].
+// If an error occurs while encoding or writing, it returns that error.
+//
+// EncodePNG is compatible with [ImageEncoderFunc] type.
+func EncodePNG(img image.Image, writer io.Writer) error {
 	return png.Encode(writer, img)
 }
 
-func encodeJPEG(img image.Image, writer io.Writer) error {
+// EncodeJPEG encodes the given [image.Image] into JPEG format bytes and writes those bytes in [io.Writer].
+// If an error occurs while encoding or writing, it returns that error.
+//
+// It uses 75% quality while encoding JPEG image.
+//
+// EncodeJPEG is compatible with [ImageEncoderFunc] type.
+func EncodeJPEG(img image.Image, writer io.Writer) error {
 	return jpeg.Encode(writer, img, &jpeg.Options{
 		Quality: jpeg.DefaultQuality,
 	})
 }
 
-func encodeTIFF(img image.Image, writer io.Writer) error {
+// EncodeTIFF encodes the given [image.Image] into TIFF format bytes and writes those bytes in [io.Writer].
+// If an error occurs while encoding or writing, it returns that error.
+//
+// It uses deflate compression and a predictor while encoding TIFF image.
+//
+// EncodeTIFF is compatible with [ImageEncoderFunc] type.
+func EncodeTIFF(img image.Image, writer io.Writer) error {
 	return tiff.Encode(writer, img, &tiff.Options{
 		Compression: tiff.Deflate,
 		Predictor:   true,
 	})
 }
 
-func encodeWEBP(img image.Image, writer io.Writer) error {
+// EncodeWEBP encodes the given [image.Image] into WEBP format bytes and writes those bytes in [io.Writer].
+// If an error occurs while encoding or writing, it returns that error.
+//
+// It uses lossless compression, 90% quality and also preserves transparency while encoding WEBP image.
+//
+// EncodeWEBP is compatible with [ImageEncoderFunc] type.
+func EncodeWEBP(img image.Image, writer io.Writer) error {
 	return webp.Encode(writer, img, &webp.Options{
 		Lossless: false,
 		Quality:  webp.DefaulQuality,

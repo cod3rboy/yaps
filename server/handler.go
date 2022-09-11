@@ -21,41 +21,52 @@ var SupportedFormats = []string{
 	img.IMAGE_WEBP,
 }
 
-// Query string keys for parameters
-const KEY_FOR_SIZE = "s"
-const KEY_FOR_BG_COLOR = "b"
-const KEY_FOR_TEXT_COLOR = "c"
-const KEY_FOR_TEXT = "t"
-const KEY_FOR_SCALE = "x"
+// Constants for query parameter keys
+const (
+	keySize      = "s"
+	keyBgColor   = "b"
+	keyTextColor = "c"
+	keyText      = "t"
+	keyScale     = "x"
+)
 
 // Client Errors
-var ErrUnsupportedFormat = fiber.NewError(fiber.ErrBadRequest.Code, "unsupported image format")
-var ErrInvalidParamSize = fiber.NewError(fiber.ErrBadRequest.Code, "invalid size ("+KEY_FOR_SIZE+") value")
-var ErrInvalidParamScale = fiber.NewError(fiber.ErrBadRequest.Code, "invalid scale ("+KEY_FOR_SCALE+") value")
-var ErrInvalidParamBgColor = fiber.NewError(fiber.ErrBadRequest.Code, "invalid background color ("+KEY_FOR_BG_COLOR+") value")
-var ErrInvalidParamTextColor = fiber.NewError(fiber.ErrBadRequest.Code, "invalid text color ("+KEY_FOR_TEXT_COLOR+") value")
+var (
+	ErrUnsupportedFormat     = fiber.NewError(fiber.ErrBadRequest.Code, "unsupported image format")
+	ErrInvalidParamSize      = fiber.NewError(fiber.ErrBadRequest.Code, "invalid size ("+keySize+") value")
+	ErrInvalidParamScale     = fiber.NewError(fiber.ErrBadRequest.Code, "invalid scale ("+keyScale+") value")
+	ErrInvalidParamBgColor   = fiber.NewError(fiber.ErrBadRequest.Code, "invalid background color ("+keyBgColor+") value")
+	ErrInvalidParamTextColor = fiber.NewError(fiber.ErrBadRequest.Code, "invalid text color ("+keyTextColor+") value")
+)
 
 // Constants to help parse size parameter
-const DIMENSION_DELIMITER = "x"
-const WIDTH_INDEX = 0
-const HEIGHT_INDEX = 1
+const (
+	dimensionDelimiter = "x"
+	widthIndex         = 0
+	heightIndex        = 1
+)
 
 // Default values for parameters
-var DEFAULT_SIZE = img.Size{Width: 100, Height: 100}
-var DEFAULT_BG_COLOR = img.Color{
-	// Light Gray (#cccccc)
-	R: 0xCC,
-	G: 0xCC,
-	B: 0xCC,
-}
-var DEFAULT_TEXT_COLOR = img.Color{
-	// Dark Gray (#969696)
-	R: 0x96,
-	G: 0x96,
-	B: 0x96,
-}
-var DEFAULT_SCALE = 1.0
+var (
+	defaultSize    = img.Size{Width: 100, Height: 100}
+	defaultBgColor = img.Color{
+		// Light Gray (#cccccc)
+		R: 0xCC,
+		G: 0xCC,
+		B: 0xCC,
+	}
+	defaultTextColor = img.Color{
+		// Dark Gray (#969696)
+		R: 0x96,
+		G: 0x96,
+		B: 0x96,
+	}
+	defaultScale = 1.0
+)
 
+// HandlerImage is a handler to serve image generation request.
+//
+// It is only compatible with [fiber.Handler] inteface and not with [http.Handler] interface.
 func HandlerImage(ctx *fiber.Ctx) error {
 	format := ctx.Params("format", "")
 	if !sliceutils.ContainsString(SupportedFormats, format) {
@@ -78,7 +89,7 @@ func HandlerImage(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ErrInvalidParamScale
 	}
-	defaultText := fmt.Sprintf("%d %s %d", utils.ScaleDimension(size.Width, scale), DIMENSION_DELIMITER, utils.ScaleDimension(size.Height, scale))
+	defaultText := fmt.Sprintf("%d %s %d", utils.ScaleDimension(size.Width, scale), dimensionDelimiter, utils.ScaleDimension(size.Height, scale))
 
 	text := getParamText(ctx, defaultText)
 
@@ -97,15 +108,20 @@ func HandlerImage(ctx *fiber.Ctx) error {
 	}
 	ctx.Set("Content-Type", result.MimeType)
 	ctx.Set("Content-Length", string(result.Bytes))
+
 	return ctx.Send(result.Bytes)
 }
 
+// getParamSize returns the image size read from query parameters.
+//
+// If an error occurs, it returns nil, error.
+// If no size is present in query parameters, it returns defaultSize.
 func getParamSize(ctx *fiber.Ctx) (*img.Size, error) {
 	sizeParam := new(img.Size)
-	sizeParam.Height = DEFAULT_SIZE.Height
-	sizeParam.Width = DEFAULT_SIZE.Width
+	sizeParam.Height = defaultSize.Height
+	sizeParam.Width = defaultSize.Width
 
-	sizeValue := ctx.Query(KEY_FOR_SIZE)
+	sizeValue := ctx.Query(keySize)
 	if sizeValue == "" {
 		return sizeParam, nil
 	}
@@ -113,13 +129,13 @@ func getParamSize(ctx *fiber.Ctx) (*img.Size, error) {
 
 	var w, h string
 
-	if !strings.Contains(sizeValue, DIMENSION_DELIMITER) {
+	if !strings.Contains(sizeValue, dimensionDelimiter) {
 		// Square side
 		w, h = sizeValue, sizeValue
 	} else {
 		// Rectange width and height
-		dimensions := strings.Split(sizeValue, DIMENSION_DELIMITER)
-		w, h = dimensions[WIDTH_INDEX], dimensions[HEIGHT_INDEX]
+		dimensions := strings.Split(sizeValue, dimensionDelimiter)
+		w, h = dimensions[widthIndex], dimensions[heightIndex]
 	}
 
 	width, err := strconv.Atoi(w)
@@ -135,13 +151,17 @@ func getParamSize(ctx *fiber.Ctx) (*img.Size, error) {
 	return sizeParam, nil
 }
 
+// getParamBgColor returns the image background color read from query parameters.
+//
+// If an error occurs, it return nil, error.
+// If no background color is present in query parameters, it returns defaultBgColor.
 func getParamBgColor(ctx *fiber.Ctx) (*img.Color, error) {
 	bgColorParam := new(img.Color)
-	bgColorParam.R = DEFAULT_BG_COLOR.R
-	bgColorParam.G = DEFAULT_BG_COLOR.G
-	bgColorParam.B = DEFAULT_BG_COLOR.B
+	bgColorParam.R = defaultBgColor.R
+	bgColorParam.G = defaultBgColor.G
+	bgColorParam.B = defaultBgColor.B
 
-	bgColorValue := ctx.Query(KEY_FOR_BG_COLOR)
+	bgColorValue := ctx.Query(keyBgColor)
 
 	if bgColorValue == "" {
 		return bgColorParam, nil
@@ -160,13 +180,17 @@ func getParamBgColor(ctx *fiber.Ctx) (*img.Color, error) {
 	return bgColorParam, nil
 }
 
+// getParamTextColor returns the image text color read from query parameters.
+//
+// If an error occurs, it return nil, error.
+// If no text color is present in query parameters, it returns defaultTextColor.
 func getParamTextColor(ctx *fiber.Ctx) (*img.Color, error) {
 	txtColorParam := new(img.Color)
-	txtColorParam.R = DEFAULT_TEXT_COLOR.R
-	txtColorParam.G = DEFAULT_TEXT_COLOR.G
-	txtColorParam.B = DEFAULT_TEXT_COLOR.B
+	txtColorParam.R = defaultTextColor.R
+	txtColorParam.G = defaultTextColor.G
+	txtColorParam.B = defaultTextColor.B
 
-	txtColorValue := ctx.Query(KEY_FOR_TEXT_COLOR)
+	txtColorValue := ctx.Query(keyTextColor)
 
 	if txtColorValue == "" {
 		return txtColorParam, nil
@@ -185,14 +209,21 @@ func getParamTextColor(ctx *fiber.Ctx) (*img.Color, error) {
 	return txtColorParam, nil
 }
 
+// getParamText returns the image text read from query parameters.
+//
+// If no text is present in query parameters, it returns defaultValue.
 func getParamText(ctx *fiber.Ctx, defaultValue string) string {
-	return ctx.Query(KEY_FOR_TEXT, defaultValue)
+	return ctx.Query(keyText, defaultValue)
 }
 
+// getParamScale returns the image scale read from query parameters.
+//
+// If an error occurs, it returns 0.0, error.
+// If no scale is present in query parameters, it returns defaultScale.
 func getParamScale(ctx *fiber.Ctx) (float64, error) {
-	scaleValue := ctx.Query(KEY_FOR_SCALE)
+	scaleValue := ctx.Query(keyScale)
 	if scaleValue == "" {
-		return DEFAULT_SCALE, nil
+		return defaultScale, nil
 	}
 	scaleParam, err := strconv.ParseFloat(scaleValue, 32)
 	if err != nil {
