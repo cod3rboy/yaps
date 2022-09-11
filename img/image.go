@@ -23,9 +23,6 @@ const IMAGE_PNG = "png"
 const IMAGE_TIFF = "tiff"
 const IMAGE_WEBP = "webp"
 
-// const IMAGE_GIF = "gif"
-// const IMAGE_SVG = "svg"
-
 // Mime types corresponding to above images
 var mimeTypes = map[string]string{
 	IMAGE_JPG:  "image/" + IMAGE_JPG,
@@ -33,8 +30,6 @@ var mimeTypes = map[string]string{
 	IMAGE_PNG:  "image/" + IMAGE_PNG,
 	IMAGE_TIFF: "image/" + IMAGE_TIFF,
 	IMAGE_WEBP: "image/" + IMAGE_WEBP,
-	// IMAGE_GIF:  "image/" + IMAGE_GIF,
-	// IMAGE_SVG:  "image/" + IMAGE_SVG,
 }
 
 // Encoding function type
