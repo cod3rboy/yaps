@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-// IsNumber returns true if str is a numeric string otherwise it returns false.
+// IsNumber returns true if str is a non-negative numeric string otherwise it returns false.
 func IsNumber(str string) bool {
 	return strings.IndexFunc(str, func(c rune) bool {
 		return c < '0' || c > '9'
