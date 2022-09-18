@@ -11,15 +11,21 @@ import (
 	"github.com/vharitonsky/iniflags"
 )
 
+// Default values for configuration flags
+const defaultHostName = "localhost"
+const defaultHostPort = 8080
+const defaultAllowOrigins = "*"
+const defaultAllowMethods = "GET,POST,PUT,PATCH,DELETE"
+
 // Configuration variables for application
 var (
-	hostName     = flag.String("hostName", "localhost", "Server host name. (Default- localhost)")
-	hostPort     = flag.Int("hostPort", 8080, "Server port number. (Default- 8080)")
-	allowOrigins = flag.String("allowOrigins", "*", "List of allowed origins. (Default- *)")
-	allowMethods = flag.String("allowMethods", "GET,POST,PUT,PATCH,DELETE", "List of allowed http methods. (Default- GET,POST,PUT,PATCH,DELETE)")
+	hostName     = flag.String("hostName", defaultHostName, "Server host name. (Default- localhost)")
+	hostPort     = flag.Int("hostPort", defaultHostPort, "Server port number. (Default- 8080)")
+	allowOrigins = flag.String("allowOrigins", defaultAllowOrigins, "List of allowed origins. (Default- *)")
+	allowMethods = flag.String("allowMethods", defaultAllowMethods, "List of allowed http methods. (Default- GET,POST,PUT,PATCH,DELETE)")
 )
 
-func init() {
+func Load() {
 	// Parse flag arguments/ini file
 	iniflags.Parse()
 }
