@@ -25,6 +25,7 @@ var (
 	allowMethods = flag.String("allowMethods", defaultAllowMethods, "List of allowed http methods. (Default- GET,POST,PUT,PATCH,DELETE)")
 )
 
+// Load parses the command-line flags
 func Load() {
 	// Parse flag arguments/ini file
 	iniflags.Parse()
