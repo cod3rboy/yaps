@@ -107,23 +107,28 @@ func TestGenerate(t *testing.T) {
 		if expectedMime != actualMime {
 			t.Fatalf("expected mime type = %s , actual mime type = %s", expectedMime, actualMime)
 		}
-		expectedBytes, err := os.ReadFile(filepath.Join(wdir, data.ExpectedPath))
+
+		expectedPath := filepath.Join(wdir, data.ExpectedPath)
+		actualPath := filepath.Join(wdir, "testgen", filepath.Base(expectedPath))
+
+		expectedBytes, err := os.ReadFile(expectedPath)
 		if err != nil {
 			t.Fatal(err)
 		}
 		actualBytes := result.Bytes
 
-		expectedPath := filepath.Join(wdir, data.ExpectedPath)
-		actualPath := filepath.Join(wdir, "testgen", filepath.Base(expectedPath))
-
 		os.RemoveAll(filepath.Dir(actualPath))
+		err = os.MkdirAll(filepath.Dir(actualPath), 0644)
+		if err != nil {
+			t.Fatal(err)
+		}
 
 		if !bytes.Equal(expectedBytes, actualBytes) {
 			err := os.WriteFile(actualPath, actualBytes, 0644)
 			if err != nil {
 				t.Fatal(err)
 			}
-			t.Fatalf("\nexpected = %s\nactual=%s\n", expectedPath, actualPath)
+			t.Fatalf("\nexpected image = %s\nactual image = %s\n", expectedPath, actualPath)
 		}
 	}
 }
