@@ -19,10 +19,10 @@ const defaultAllowMethods = "GET,POST,PUT,PATCH,DELETE"
 
 // Configuration variables for application
 var (
-	hostName     = flag.String("hostName", defaultHostName, "Server host name. (Default- localhost)")
-	hostPort     = flag.Int("hostPort", defaultHostPort, "Server port number. (Default- 8080)")
-	allowOrigins = flag.String("allowOrigins", defaultAllowOrigins, "List of allowed origins. (Default- *)")
-	allowMethods = flag.String("allowMethods", defaultAllowMethods, "List of allowed http methods. (Default- GET,POST,PUT,PATCH,DELETE)")
+	hostName     = flag.String("hostName", defaultHostName, "Server host name")
+	hostPort     = flag.Int("hostPort", defaultHostPort, "Server port number")
+	allowOrigins = flag.String("allowOrigins", defaultAllowOrigins, "List of allowed origins")
+	allowMethods = flag.String("allowMethods", defaultAllowMethods, "List of allowed http methods")
 )
 
 // Load parses the command-line flags
