@@ -9,10 +9,10 @@ import (
 	"image/png"
 	"io"
 
-	"github.com/chai2010/webp"
 	"github.com/cod3rboy/yaps/utils"
 	"github.com/fogleman/gg"
 	"github.com/golang/freetype/truetype"
+	"github.com/nickalie/go-webpbin"
 	"golang.org/x/image/font/gofont/goregular"
 	"golang.org/x/image/tiff"
 )
@@ -199,13 +199,7 @@ func EncodeTIFF(img image.Image, writer io.Writer) error {
 // EncodeWEBP encodes the given [image.Image] into WEBP format bytes and writes those bytes in [io.Writer].
 // If an error occurs while encoding or writing, it returns that error.
 //
-// It uses lossless compression, 90% quality and also preserves transparency while encoding WEBP image.
-//
 // EncodeWEBP is compatible with [ImageEncoderFunc] type.
 func EncodeWEBP(img image.Image, writer io.Writer) error {
-	return webp.Encode(writer, img, &webp.Options{
-		Lossless: false,
-		Quality:  webp.DefaulQuality,
-		Exact:    true,
-	})
+	return webpbin.Encode(writer, img)
 }

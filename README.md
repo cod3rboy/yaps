@@ -10,7 +10,7 @@ YAPS is a server backend which generates placeholder image of any size along wit
 
 ### Project Dependencies
 
-- [webp](https://github.com/chai2010/webp) - For webp format encoding.
+- [go-webpbin](https://pkg.go.dev/github.com/nickalie/go-webpbin) - For webp format encoding.
 - [gg](https://github.com/fogleman/gg) - Go graphics library.
 - [gofiber](https://github.com/gofiber/fiber/v2) - Web framework for golang.
 - [freetype](https://github.com/golang/freetype) - Font rendering library.

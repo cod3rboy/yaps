@@ -60,3 +60,5 @@ tmp/
 # Tests generated artifacts
 testgen/
 /**/testgen/
+
+.bin/
