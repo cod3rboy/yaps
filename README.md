@@ -1,4 +1,4 @@
-# <div><span>YA</span><img src="./assets/Yaps%20Logo.svg" width="40" height="40" alt="logo" align="center"><span>S</span></div>
+# <div><span>YA</span><img src="./assets/logo.svg" width="40" height="40" alt="logo" align="center"><span>S</span></div>
 
 Yet Another Placeholder Service
 
