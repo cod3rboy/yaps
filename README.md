@@ -21,13 +21,13 @@ YAPS is a server backend which generates placeholder image of any size along wit
 - [iniflags](https://github.com/vharitonsky/iniflags) - Library to load flags from ini configuration files.
 - [image](https://pkg.go.dev/golang.org/x/image) - Supplementary library to standard `image` package.
 
+## Building Project
+
+`go build .`
+
 ## Running Server
 
 `yaps -hostName localhost -hostPort 8080`
-
-## Building Project
-
-`go build main.go`
 
 ## Running Tests
 
