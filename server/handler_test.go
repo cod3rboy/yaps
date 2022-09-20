@@ -182,7 +182,7 @@ func TestHandlerImage(t *testing.T) {
 			reqUrl += "?" + url.PathEscape(data.Query)
 		}
 		req := httptest.NewRequest(http.MethodGet, reqUrl, nil)
-		res, err := router.Test(req)
+		res, err := router.Test(req, -1)
 		if err != nil {
 			t.Fatal(err)
 		}
