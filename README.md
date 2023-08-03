@@ -37,6 +37,7 @@ YAPS is a server backend which generates placeholder image of any size along wit
 
 - `-hostName` - Server host name to use. e.g. `localhost`
 - `-hostPort` - Server port number to use. e.g. `8080`
+- `pathPrefix` - Prefix path for all routes e.g. `/`
 - `-allowMethods` - Comma-separated http methods to allow. e.g. `GET,PUT,PATCH,POST`
 - `-allowOrigins` - Commad-separated whitelisted origins. Use `*` to allow all origins. e.g. `example.com,foo.com,bar.com`
 - `-config` - Path to ini configuration file.

@@ -23,4 +23,4 @@ RUN apt-get update \
 
 EXPOSE 8080
 
-ENTRYPOINT [ "/app/yaps", "-hostName", "0.0.0.0", "-hostPort", "8080" ]
+ENTRYPOINT [ "/app/yaps", "-hostName", "0.0.0.0", "-hostPort", $PORT, "-pathPrefix", $PATH_PREFIX ]

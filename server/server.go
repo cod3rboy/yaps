@@ -14,11 +14,12 @@ import (
 //
 // For supported image formats, see [SupportedFormats].
 func SetupAndListen() {
-	router := fiber.New()
-	router.Use(cors.New(cors.Config{
+	app := fiber.New()
+	app.Use(cors.New(cors.Config{
 		AllowOrigins: config.AllowOrigins(),
 		AllowMethods: config.AllowMethods(),
 	}))
+	router := app.Group(config.PathPrefix())
 	router.Get("/:format<regex("+strings.Join(SupportedFormats, "|")+")>", HandlerImage)
-	router.Listen(config.Host() + ":" + strconv.Itoa(config.Port()))
+	app.Listen(config.Host() + ":" + strconv.Itoa(config.Port()))
 }
