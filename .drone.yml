@@ -1,0 +1,170 @@
+# lint, test and compile
+kind: pipeline
+type: docker
+name: Build
+trigger:
+  branch:
+    - master
+    - main
+  event:
+    - pull_request
+platform:
+  os: linux
+  arch: amd64
+steps:
+  - name: test and compile
+    image: golang:1.21.0-bookworm
+    commands:
+      - go vet ./...
+      - go test ./...
+      - go build
+---
+# Preprod Docker Build
+# build docker image and push to container registry
+kind: pipeline
+type: docker
+name: Preprod Docker Build
+trigger:
+  branch:
+    - master
+    - main
+  event:
+    - push
+platform:
+  os: linux
+  arch: amd64
+depends_on:
+  - Build
+steps:
+  - name: build and push
+    image: plugins/docker
+    settings:
+      registry:
+        from_secret: container_registry
+      username:
+        from_secret: container_registry_user
+      password:
+        from_secret: container_registry_token
+      repo: ${DRONE_REPO_LINK:8}
+      tags:
+        - ${DRONE_COMMIT_SHA:0:10}
+      purge: true
+---
+# Preprod ArgoCD Deployment
+# update image version in gitops repo
+kind: pipeline
+type: docker
+name: Preprod Deployment
+trigger:
+  branch:
+    - master
+    - main
+  event:
+    - push
+platform:
+  os: linux
+  arch: amd64
+depends_on:
+  - Preprod Docker Build
+clone:
+  disable: true
+steps:
+  - name: deploy argocd
+    image: bitnami/git:2.41.0
+    environment:
+      GITHUB_PAT:
+        from_secret: github_pat
+      GITOPS_REPO:
+        from_secret: gitops_repo_github
+      GITOPS_REPO_USER:
+        from_secret: gitops_repo_user
+      GITOPS_BRANCH: master
+      GITOPS_DIR: preprod
+      IMAGE_VERSION: "${DRONE_REPO_LINK:8}:${DRONE_COMMIT_SHA:0:10}"
+    commands:
+      - mkdir gitops-repo
+      - cd gitops-repo
+      - git clone -b $GITOPS_BRANCH --single-branch https://$GITOPS_REPO_USER:$GITHUB_PAT@github.com/$GITOPS_REPO.git .
+      - install_packages curl
+      - curl -s -L https://github.com/mikefarah/yq/releases/download/v4.34.2/yq_linux_amd64 --output yq
+      - mv yq /usr/bin/yq
+      - chmod +rwx /usr/bin/yq
+      - yq -i 'select(.kind == "Deployment").spec.template.spec.containers[0].image |= strenv(IMAGE_VERSION)' $GITOPS_DIR/${DRONE_REPO_NAME}.yaml
+      - git config user.name "${DRONE_COMMIT_AUTHOR_NAME}"
+      - git config user.email "${DRONE_COMMIT_AUTHOR_EMAIL}"
+      - git status
+      - git add $GITOPS_DIR/${DRONE_REPO_NAME}.yaml
+      - git commit -m "updated $GITOPS_DIR/${DRONE_REPO_NAME} image version to $IMAGE_VERSION"
+      - git log -n 1 --pretty=short
+      - git push origin $GITOPS_BRANCH
+---
+# Prod Docker Build
+# build docker image and push to container registry
+kind: pipeline
+type: docker
+name: Prod Docker Build
+trigger:
+  event:
+    - tag
+platform:
+  os: linux
+  arch: amd64
+steps:
+  - name: build and push
+    image: plugins/docker
+    settings:
+      registry:
+        from_secret: container_registry
+      username:
+        from_secret: container_registry_user
+      password:
+        from_secret: container_registry_token
+      repo: ${DRONE_REPO_LINK:8}
+      tags:
+        - ${DRONE_TAG}
+      purge: true
+---
+# Prod ArgoCD Deployment
+# update image version in gitops repo
+kind: pipeline
+type: docker
+name: Prod Deployment
+trigger:
+  event:
+    - tag
+platform:
+  os: linux
+  arch: amd64
+depends_on:
+  - Prod Docker Build
+clone:
+  disable: true
+steps:
+  - name: deploy argocd
+    image: bitnami/git:2.41.0
+    environment:
+      GITHUB_PAT:
+        from_secret: github_pat
+      GITOPS_REPO:
+        from_secret: gitops_repo_github
+      GITOPS_REPO_USER:
+        from_secret: gitops_repo_user
+      GITOPS_BRANCH: master
+      GITOPS_DIR: prod
+      IMAGE_VERSION: "${DRONE_REPO_LINK:8}:${DRONE_TAG}"
+    commands:
+      - mkdir gitops-repo
+      - cd gitops-repo
+      - git clone -b $GITOPS_BRANCH --single-branch https://$GITOPS_REPO_USER:$GITHUB_PAT@github.com/$GITOPS_REPO.git .
+      - install_packages curl
+      - curl -s -L https://github.com/mikefarah/yq/releases/download/v4.34.2/yq_linux_amd64 --output yq
+      - mv yq /usr/bin/yq
+      - chmod +rwx /usr/bin/yq
+      - yq -i 'select(.kind == "Deployment").spec.template.spec.containers[0].image |= strenv(IMAGE_VERSION)' $GITOPS_DIR/${DRONE_REPO_NAME}.yaml
+      - git config user.name "${DRONE_COMMIT_AUTHOR_NAME}"
+      - git config user.email "${DRONE_COMMIT_AUTHOR_EMAIL}"
+      - git status
+      - git add $GITOPS_DIR/${DRONE_REPO_NAME}.yaml
+      - git commit -m "updated $GITOPS_DIR/${DRONE_REPO_NAME} image version to $IMAGE_VERSION"
+      - git log -n 1 --pretty=short
+      - git push origin $GITOPS_BRANCH

@@ -19,8 +19,8 @@ COPY --from=build /src/yaps .
 RUN apt-get update \
   && apt-get install -y ca-certificates \
   && apt-get clean \
-  && chmod +x /app/yaps
+  chmod +x /app/yaps
 
 EXPOSE 8080
 
-ENTRYPOINT [ "/app/yaps", "-hostName", "0.0.0.0", "-hostPort", $PORT, "-pathPrefix", $PATH_PREFIX ]
+ENTRYPOINT /app/yaps -hostName "0.0.0.0" -hostPort $PORT -pathPrefix $PATH_PREFIX
