@@ -35,8 +35,8 @@ YAPS is a server backend which generates placeholder image of any size along wit
 
 ## Command Line Flags
 
-| Flag         | Description                                     | Default                              |
-| ------------ | ----------------------------------------------- | ------------------------------------ |
+| Flag           | Description                                     | Default                              |
+| -------------- | ----------------------------------------------- | ------------------------------------ |
 | `hostName`     | Server host name to use.                        | `localhost`                          |
 | `hostPort`     | Server port number to use.                      | `8080`                               |
 | `pathPrefix`   | Prefix path for all routes.                     | `/`                                  |
@@ -46,7 +46,7 @@ YAPS is a server backend which generates placeholder image of any size along wit
 
 ## Docker Image Environment Variables
 
-- `PORT`: Server port number to listen on.
+- `PORT`: Listener port for yaps server.
 - `PATH_PREFIX` : Path prefix for all routes.
 
 ## Usage Guide
