@@ -168,3 +168,59 @@ steps:
       - git commit -m "updated $GITOPS_DIR/${DRONE_REPO_NAME} image version to $IMAGE_VERSION"
       - git log -n 1 --pretty=short
       - git push origin $GITOPS_BRANCH
+
+---
+# Build Promotion pipeline
+kind: pipeline
+type: docker
+name: Build Promotion
+trigger:
+  branch:
+    - master
+    - main
+  event:
+    - promote
+  target:
+    - preprod
+    - preproduction
+    - dev
+    - test
+platform:
+  os: linux
+  arch: amd64
+clone:
+  disable: true
+steps:
+  - name: deploy argocd
+    image: bitnami/git:2.41.0
+    environment:
+      GITHUB_PAT:
+        from_secret: github_pat
+      GITOPS_REPO:
+        from_secret: gitops_repo_github
+      GITOPS_REPO_USER:
+        from_secret: gitops_repo_user
+      GITOPS_BRANCH: master
+      GITOPS_DIR: preprod
+      IMAGE_VERSION: "${DRONE_REPO_LINK:8}:${DRONE_COMMIT_SHA:0:10}"
+      REPO_HOST:
+        from_secret: repo_host
+      REPO_TOKEN:
+        from_secret: container_registry_token
+    commands:
+      - install_packages curl
+      - curl --silent --output /dev/null --show-error --fail -X 'GET' https://$REPO_HOST/api/v1/packages/${DRONE_REPO_OWNER}/container/${DRONE_REPO_NAME}/${DRONE_COMMIT_SHA:0:10}?access_token=$REPO_TOKEN
+      - mkdir gitops-repo
+      - cd gitops-repo
+      - git clone -b $GITOPS_BRANCH --single-branch https://$GITOPS_REPO_USER:$GITHUB_PAT@github.com/$GITOPS_REPO.git .
+      - curl -s -L https://github.com/mikefarah/yq/releases/download/v4.34.2/yq_linux_amd64 --output yq
+      - mv yq /usr/bin/yq
+      - chmod +rwx /usr/bin/yq
+      - yq -i 'select(.kind == "Deployment").spec.template.spec.containers[0].image |= strenv(IMAGE_VERSION)' $GITOPS_DIR/${DRONE_REPO_NAME}.yaml
+      - git config user.name "${DRONE_COMMIT_AUTHOR_NAME}"
+      - git config user.email "${DRONE_COMMIT_AUTHOR_EMAIL}"
+      - git status
+      - git add $GITOPS_DIR/${DRONE_REPO_NAME}.yaml
+      - git commit -m "updated $GITOPS_DIR/${DRONE_REPO_NAME} image version to $IMAGE_VERSION"
+      - git log -n 1 --pretty=short
+      - git push origin $GITOPS_BRANCH
